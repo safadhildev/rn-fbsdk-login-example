@@ -4,11 +4,11 @@ this repo will show you my codes (on Android part) of integrating react-native-f
 
 ## Installation
 
-    `npm i react-native-fbsdk`
+    npm i react-native-fbsdk
 
 or
 
-    `yarn add react-native-fbsdk`
+    yarn add react-native-fbsdk
 
 ## Create App In Facebook for Developers
 
@@ -25,11 +25,11 @@ We'll need to create an app in facebook developers using a facebook account
 
 ## Run the app
 
-    `npm run android`
+    npm run android
 
 or
 
-    `yarn run android`
+    yarn run android
 
 ## Usage
 
@@ -37,7 +37,7 @@ or
 
 **Using `LoginButton` and `AccessToken`**
 
-    `import React, { Component } from 'react';
+    import React, { Component } from 'react';
     import { View } from 'react-native';
     import { LoginButton, AccessToken } from 'react-native-fbsdk';
 
@@ -65,11 +65,11 @@ or
           </View>
         );
       }
-    };`
+    };
 
 **Using Login Manager**
 
-    `// ...
+    // ...
 
     import { LoginManager } from "react-native-fbsdk";
 
@@ -90,4 +90,4 @@ or
       function(error) {
         console.log("Login fail with error: " + error);
       }
-    );`
+    );
