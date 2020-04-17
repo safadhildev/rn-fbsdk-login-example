@@ -65,7 +65,13 @@ class App extends Component {
       const result = await LoginManager.logInWithPermissions([
         'public_profile',
         'email',
+        'user_birthday',
       ]);
+
+      /** 
+       * Note: 
+       * user_birthday will show warning 'Submit fo Login Review'
+       */
 
       if (result.grantedPermissions) {
         this.setState({logged: true});
@@ -126,19 +132,22 @@ class App extends Component {
       console.log('Error fetching data', JSON.stringify(error));
     } else {
       console.log('Success', result);
-      const {id, name, picture, email, user_birthday} = result;
+      const {id, name, picture, email, birthday} = result;
+
       const user = {
         id,
         name,
         email,
         picture: picture.data.url,
-        birthday: user_birthday,
+        birthday,
       };
       this.setState({
         user,
       });
     }
   };
+
+  getUser = () => {};
 
   render() {
     const {logged, accessToken, user} = this.state;
