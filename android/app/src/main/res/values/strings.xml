@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">reactNativeFBSDK2</string>
+    <string name="facebook_app_id">2636516506624583</string>
+    <string name="fb_login_protocol_scheme">fb2636516506624583</string>
 </resources>

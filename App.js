@@ -6,109 +6,177 @@
  * @flow strict-local
  */
 
-import React from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+import React, {Component} from 'react';
+import {StyleSheet, View, Text, StatusBar, Image} from 'react-native';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import FBSDK, {
+  LoginButton,
+  AccessToken,
+  GraphRequest,
+  GraphRequestManager,
+} from 'react-native-fbsdk';
 
-const App: () => React$Node = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
-};
+import Button from './src/components/Button';
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
   body: {
-    backgroundColor: Colors.white,
+    flex: 1,
+    justifyContent: 'center',
   },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  titleText: {
+    marginHorizontal: 50,
+    fontWeight: 'bold',
+    margin: 10,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
+  text: {
+    marginHorizontal: 50,
+    marginVertical: 10,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
+  image: {
+    width: 50,
+    height: 50,
+    backgroundColor: '#000',
+    alignSelf: 'center',
+    borderRadius: 50,
   },
 });
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      logged: false,
+      accessToken: '',
+      user: [],
+    };
+  }
+
+  onButtonPress = (logged) => {
+    if (logged) {
+      this.onLogout();
+    } else {
+      this.onFbLogin();
+    }
+  };
+  onFbLogin = async () => {
+    const {LoginManager} = FBSDK;
+
+    try {
+      const result = await LoginManager.logInWithPermissions([
+        'public_profile',
+        'email',
+      ]);
+
+      if (result.grantedPermissions) {
+        this.setState({logged: true});
+        this.getAccessToken();
+        this.getGraphReq();
+      }
+    } catch (error) {
+      console.log('Error', error);
+    }
+  };
+
+  onLogout = () => {
+    const {LoginManager} = FBSDK;
+    LoginManager.logOut();
+    this.setState({
+      logged: false,
+      accessToken: '',
+      user: [],
+    });
+  };
+
+  getAccessToken = () => {
+    AccessToken.getCurrentAccessToken().then((data) => {
+      console.log('Access Token', data.accessToken.toString());
+
+      this.setState({accessToken: data.accessToken.toString()});
+      //this.initUser(data.accessToken.toString());
+    });
+  };
+
+  // initUser=(token)=>{
+  //   fetch(
+  //     `https://graph.facebook.com/v2.5/me?fields=email,name,friends&access_token=${token}`,
+  //   )
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       // Some user object has been set up somewhere, build that user here
+  //       console.log('Name', data.name);
+  //       console.log('id', data.id);
+  //       console.log('email', data.email); //Undefined
+  //     })
+  //     .catch((error) => {
+  //       console.log('Error', error);
+  //     });
+  // }
+
+  getGraphReq = () => {
+    const infoRequest = new GraphRequest(
+      '/me?fields=name,picture,email,birthday',
+      null,
+      this._responseInfoCallback,
+    );
+    new GraphRequestManager().addRequest(infoRequest).start();
+  };
+
+  _responseInfoCallback = (error, result) => {
+    if (error) {
+      console.log('Error fetching data', JSON.stringify(error));
+    } else {
+      console.log('Success', result);
+      const {id, name, picture, email, user_birthday} = result;
+      const user = {
+        id,
+        name,
+        email,
+        picture: picture.data.url,
+        birthday: user_birthday,
+      };
+      this.setState({
+        user,
+      });
+    }
+  };
+
+  render() {
+    const {logged, accessToken, user} = this.state;
+
+    return (
+      <>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.body}>
+          <Image
+            source={
+              user.picture
+                ? {uri: user.picture}
+                : require('./src/img/fbprofilepic.jpeg')
+            }
+            style={styles.image}
+          />
+          {accessToken ? (
+            <>
+              <Text style={styles.titleText}>Login result</Text>
+              <Text style={styles.text}>
+                Access Token : {accessToken}
+                {'\n\n'}ID: {user.id}
+                {'\n\n'}Name : {user.name}
+                {'\n\n'}Email : {user.email}
+                {'\n\n'}Birthday : {user.birthday}
+                {'\n\n'}Picture Url : {user.picture}
+              </Text>
+            </>
+          ) : null}
+
+          <Button
+            title={logged ? 'Logout' : 'Login with Facebook'}
+            onPress={() => this.onButtonPress(logged)}
+          />
+        </View>
+      </>
+    );
+  }
+}
 
 export default App;
