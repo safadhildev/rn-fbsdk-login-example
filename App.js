@@ -6,11 +6,10 @@
  * @flow strict-local
  */
 
-import React, {Component} from 'react';
+import React, {useState} from 'react';
 import {StyleSheet, View, Text, StatusBar, Image} from 'react-native';
 
 import FBSDK, {
-  LoginButton,
   AccessToken,
   GraphRequest,
   GraphRequestManager,
@@ -41,26 +40,21 @@ const styles = StyleSheet.create({
   },
 });
 
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      logged: false,
-      accessToken: '',
-      user: [],
-    };
-  }
+const App = () => {
+  const [isLogged, setIsLogged] = useState(false);
+  const [accessToken, setAccessToken] = useState('');
+  const [user, setUser] = useState({});
+  const {LoginManager} = FBSDK;
 
-  onButtonPress = (logged) => {
-    if (logged) {
-      this.onLogout();
+  const onButtonPress = () => {
+    if (isLogged) {
+      onLogout();
     } else {
-      this.onFbLogin();
+      onFbLogin();
     }
   };
-  onFbLogin = async () => {
-    const {LoginManager} = FBSDK;
 
+  const onFbLogin = async () => {
     try {
       const result = await LoginManager.logInWithPermissions([
         'public_profile',
@@ -68,66 +62,47 @@ class App extends Component {
         'user_birthday',
       ]);
 
-      /** 
-       * Note: 
+      /**
+       * Note:
        * user_birthday will show warning 'Submit fo Login Review'
        */
 
       if (result.grantedPermissions) {
-        this.setState({logged: true});
-        this.getAccessToken();
-        this.getGraphReq();
+        setIsLogged(true);
+        getAccessToken();
+        getGraphReq();
       }
     } catch (error) {
       console.log('Error', error);
     }
   };
 
-  onLogout = () => {
-    const {LoginManager} = FBSDK;
+  const onLogout = () => {
     LoginManager.logOut();
-    this.setState({
-      logged: false,
-      accessToken: '',
-      user: [],
-    });
+    setIsLogged(false);
+    setUser([]);
+    setAccessToken('');
   };
 
-  getAccessToken = () => {
+  const getAccessToken = () => {
     AccessToken.getCurrentAccessToken().then((data) => {
       console.log('Access Token', data.accessToken.toString());
 
-      this.setState({accessToken: data.accessToken.toString()});
+      setAccessToken(data.accessToken.toString());
       //this.initUser(data.accessToken.toString());
     });
   };
 
-  // initUser=(token)=>{
-  //   fetch(
-  //     `https://graph.facebook.com/v2.5/me?fields=email,name,friends&access_token=${token}`,
-  //   )
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       // Some user object has been set up somewhere, build that user here
-  //       console.log('Name', data.name);
-  //       console.log('id', data.id);
-  //       console.log('email', data.email); //Undefined
-  //     })
-  //     .catch((error) => {
-  //       console.log('Error', error);
-  //     });
-  // }
-
-  getGraphReq = () => {
+  const getGraphReq = () => {
     const infoRequest = new GraphRequest(
       '/me?fields=name,picture,email,birthday',
       null,
-      this._responseInfoCallback,
+      responseInfoCallback,
     );
     new GraphRequestManager().addRequest(infoRequest).start();
   };
 
-  _responseInfoCallback = (error, result) => {
+  const responseInfoCallback = (error, result) => {
     if (error) {
       console.log('Error fetching data', JSON.stringify(error));
     } else {
@@ -141,51 +116,44 @@ class App extends Component {
         picture: picture.data.url,
         birthday,
       };
-      this.setState({
-        user,
-      });
+
+      setUser(user);
     }
   };
 
-  getUser = () => {};
+  return (
+    <>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.body}>
+        <Image
+          source={
+            user.picture
+              ? {uri: user.picture}
+              : require('./src/img/fbprofilepic.jpeg')
+          }
+          style={styles.image}
+        />
+        {accessToken ? (
+          <>
+            <Text style={styles.titleText}>Login result</Text>
+            <Text style={styles.text}>
+              Access Token : {accessToken}
+              {'\n\n'}ID: {user.id}
+              {'\n\n'}Name : {user.name}
+              {'\n\n'}Email : {user.email}
+              {'\n\n'}Birthday : {user.birthday}
+              {'\n\n'}Picture Url : {user.picture}
+            </Text>
+          </>
+        ) : null}
 
-  render() {
-    const {logged, accessToken, user} = this.state;
-
-    return (
-      <>
-        <StatusBar barStyle="dark-content" />
-        <View style={styles.body}>
-          <Image
-            source={
-              user.picture
-                ? {uri: user.picture}
-                : require('./src/img/fbprofilepic.jpeg')
-            }
-            style={styles.image}
-          />
-          {accessToken ? (
-            <>
-              <Text style={styles.titleText}>Login result</Text>
-              <Text style={styles.text}>
-                Access Token : {accessToken}
-                {'\n\n'}ID: {user.id}
-                {'\n\n'}Name : {user.name}
-                {'\n\n'}Email : {user.email}
-                {'\n\n'}Birthday : {user.birthday}
-                {'\n\n'}Picture Url : {user.picture}
-              </Text>
-            </>
-          ) : null}
-
-          <Button
-            title={logged ? 'Logout' : 'Login with Facebook'}
-            onPress={() => this.onButtonPress(logged)}
-          />
-        </View>
-      </>
-    );
-  }
-}
+        <Button
+          title={isLogged ? 'Logout' : 'Login with Facebook'}
+          onPress={() => onButtonPress()}
+        />
+      </View>
+    </>
+  );
+};
 
 export default App;
