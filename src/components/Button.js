@@ -1,17 +1,5 @@
-import React, {Component} from 'react';
+import React from 'react';
 import {TouchableOpacity, Text, StyleSheet} from 'react-native';
-
-export default class Button extends Component {
-  render() {
-    const {title, onPress} = this.props;
-
-    return (
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>{title}</Text>
-      </TouchableOpacity>
-    );
-  }
-}
 
 const styles = StyleSheet.create({
   button: {
@@ -29,3 +17,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+const Button = ({title, onPress}) => {
+  return (
+    <TouchableOpacity style={styles.button} onPress={onPress}>
+      <Text style={styles.buttonText}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
+
+export default Button;
